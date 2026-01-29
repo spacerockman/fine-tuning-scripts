@@ -1,9 +1,28 @@
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Node.js
 node_modules/
 dist/
+build/
 *.log
 .env
-.idea/
+.npm
+.eslintcache
+
+# IDEs
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
 *.tmp
 temp/
+.temp/
