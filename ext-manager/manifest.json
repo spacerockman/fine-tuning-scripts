@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Extension Manager",
+  "version": "1.0.0",
+  "description": "智能管理您的扩展程序，根据访问的网站自动开启/关闭插件，节省系统资源。",
+  "permissions": [
+    "management",
+    "tabs",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "管理扩展",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

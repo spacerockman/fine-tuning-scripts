@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书签健康管理器</title>
+    <link rel="stylesheet" href="manager.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <span class="logo-icon">🔖</span>
+                <h1>书签管家</h1>
+            </div>
+
+            <div class="stats-card">
+                <h3>当前状态</h3>
+                <div class="stat-item">
+                    <span class="label">无效书签</span>
+                    <span class="value" id="brokenCount">0</span>
+                </div>
+                <div class="scanned-info hidden" id="scanProgressBox">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressBar"></div>
+                    </div>
+                    <span class="progress-text" id="progressText">0 / 0</span>
+                </div>
+            </div>
+
+            <button id="scanBtn" class="primary-btn">
+                <span class="btn-icon">🔍</span>
+                全面扫描
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h2>无效书签列表</h2>
+                <div class="actions" id="bulkActions">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="selectAll">
+                        <span class="checkmark"></span>
+                        全选
+                    </label>
+                    <button id="deleteSelectedBtn" class="danger-btn" disabled>
+                        <span class="btn-icon">🗑️</span>
+                        批量删除 (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+            </header>
+
+            <div id="contentArea" class="content-area">
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">✨</div>
+                    <h3>书签很健康</h3>
+                    <p>点击左侧“全面扫描”开始检测</p>
+                </div>
+
+                <!-- Scanning State -->
+                <div id="scanningState" class="scanning-state hidden">
+                    <div class="loader"></div>
+                    <h3>正在深度扫描...</h3>
+                    <p>请耐心等待，这可能需要几分钟</p>
+                </div>
+
+                <!-- List -->
+                <div id="bookmarkList" class="bookmark-grid hidden"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">操作成功</div>
+
+    <script src="manager.js"></script>
+</body>
+
+</html>

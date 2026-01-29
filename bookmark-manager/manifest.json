@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Health Manager",
+  "version": "2.0.0",
+  "description": "自动扫描书签，检测无效链接，提供全屏现代化管理界面",
+  "permissions": [
+    "bookmarks",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "打开书签管理器",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

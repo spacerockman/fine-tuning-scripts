@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Extension Manager Pro</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&family=Work+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <h1>ExtManager</h1>
+                <span class="pro-badge">PRO</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <span class="icon">📊</span> 仪表盘
+                </a>
+                <a href="#" class="nav-item" data-view="extensions">
+                    <span class="icon">🧩</span> 扩展管理
+                </a>
+                <a href="#" class="nav-item" data-view="rules">
+                    <span class="icon">🤖</span> 自动化规则
+                </a>
+                <a href="#" class="nav-item" data-view="logs">
+                    <span class="icon">📝</span> 运行日志
+                </a>
+            </nav>
+
+            <div class="system-status">
+                <div class="status-row">
+                    <span>Running</span>
+                    <div class="indicator active"></div>
+                </div>
+                <div class="memory-usage">
+                    <span>Sys Mem Saved</span>
+                    <strong>~450 MB</strong>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main View -->
+        <main class="main-view">
+
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <h2 id="pageTitle">仪表盘</h2>
+                <div class="search-box">
+                    <input type="text" placeholder="搜索扩展或规则..." id="globalSearch">
+                </div>
+            </header>
+
+            <!-- Views -->
+            <div id="viewContainer" class="view-content">
+
+                <!-- Dashboard View (Stats) -->
+                <div id="view-dashboard" class="view-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTotal">0</div>
+                            <div class="stat-label">已安装扩展</div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <div class="stat-value" id="statActive">0</div>
+                            <div class="stat-label">正在运行</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statManaged">0</div>
+                            <div class="stat-label">受控扩展 (Auto)</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">
+                        <h3>最近活动</h3>
+                    </div>
+                    <div class="activity-log-preview" id="activityPreview">
+                        <!-- Dynamic Content -->
+                        <div class="log-item">
+                            <span class="time">10:42:01</span>
+                            <span class="action highlight">AUTO-WAKE</span>
+                            <span class="target">Grammarly</span>
+                            <span class="reason">Triggered by: mail.google.com</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Extensions View -->
+                <div id="view-extensions" class="view-section">
+                    <div class="filter-bar">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="enabled">已启用</button>
+                        <button class="filter-btn" data-filter="disabled">已停用</button>
+                    </div>
+                    <div class="extension-grid" id="extGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Rules Editor Overlay (Modal) -->
+                <div id="ruleModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="modalTitle">配置规则: Extension Name</h3>
+                            <button class="close-btn" id="closeModal">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="rule-input-group">
+                                <label>添加新触发规则</label>
+                                <div class="input-row">
+                                    <select id="ruleType">
+                                        <option value="domain">域名包含 (Keyword)</option>
+                                        <option value="regex">正则匹配 (Regex)</option>
+                                    </select>
+                                    <input type="text" id="newRuleInput"
+                                        placeholder="例如: google.com 或 /^https:.*github/">
+                                    <button class="add-btn" id="addRuleBtn">添加</button>
+                                </div>
+                                <p class="hint">当访问的 URL 匹配**任意**下方规则时，扩展将自动启用。</p>
+                            </div>
+
+                            <div class="rules-list" id="modalRuleList">
+                                <!-- Rules -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="secondary-btn" id="cancelModal">取消</button>
+                            <button class="primary-btn" id="saveRulesBtn">保存配置</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
