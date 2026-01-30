@@ -26,6 +26,22 @@
     const reader = new Readability(documentClone);
     const article = reader.parse();
 
+    // Find a featured image if the article content doesn't start with one
+    let featuredImage = null;
+    try {
+      // 1. Check OpenGraph meta tags
+      featuredImage = document.querySelector('meta[property="og:image"]')?.content;
+      
+      // 2. If no OG image, check for a large image at the top of the original page
+      if (!featuredImage) {
+        const topImgs = Array.from(document.querySelectorAll('img')).slice(0, 5);
+        const largeImg = topImgs.find(img => img.naturalWidth > 600 && img.getBoundingClientRect().top < 500);
+        if (largeImg) featuredImage = largeImg.src;
+      }
+    } catch (e) {
+      console.log("Featured image extraction failed", e);
+    }
+
     if (!article || !article.content) {
       alert("抱歉，此页面无法转换成阅读模式。内容提取失败。");
       return;
@@ -35,6 +51,7 @@
     
     overlay = document.createElement('div');
     overlay.id = 'daily-reader-overlay';
+    overlay.classList.add('ink-mode'); // Default to Ink Mode
     
     const today = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -47,6 +64,7 @@
       <div id="daily-reader-controls">
         <button id="font-dec">Smaller</button>
         <button id="font-inc">Larger</button>
+        <button id="mode-toggle" style="background: #000; color: #fff;">Paper Mode</button>
         <button id="reader-close-btn" style="background: var(--newspaper-accent); color: white; border: none;">EXIT READER</button>
       </div>
       <div class="container">
@@ -68,6 +86,9 @@
           By our ${article.byline || 'Special Correspondent'} — Reported from ${article.siteName || new URL(window.location.href).hostname}
         </div>
         <div class="article-content" id="reader-article-content">
+          ${(!article.content.trim().startsWith('<img') && !article.content.trim().startsWith('<figure') && featuredImage) 
+            ? `<figure class="img-full"><img src="${featuredImage}"><figcaption>Featured Image</figcaption></figure>` 
+            : ''}
           ${article.content}
         </div>
       </div>
@@ -82,8 +103,9 @@
     // Event Listeners
     document.getElementById('reader-close-btn').onclick = removeOverlay;
     
-    let fontSize = 1.1;
+    let fontSize = 1.55;
     const contentDiv = document.getElementById('reader-article-content');
+    contentDiv.style.fontSize = fontSize + 'rem';
     
     document.getElementById('font-inc').onclick = () => {
       fontSize += 0.1;
@@ -92,6 +114,15 @@
     document.getElementById('font-dec').onclick = () => {
       fontSize = Math.max(0.8, fontSize - 0.1);
       contentDiv.style.fontSize = fontSize + 'rem';
+    };
+
+    // Toggle Ink Mode
+    document.getElementById('mode-toggle').onclick = (e) => {
+      overlay.classList.toggle('ink-mode');
+      const isInk = overlay.classList.contains('ink-mode');
+      e.target.textContent = isInk ? "Paper Mode" : "Ink Mode";
+      e.target.style.background = isInk ? "#000" : "none";
+      e.target.style.color = isInk ? "#fff" : "inherit";
     };
     
     // Smooth fade in
