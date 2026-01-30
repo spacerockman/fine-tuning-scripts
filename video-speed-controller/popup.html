@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>QuickSpeed Settings</title>
+    <style>
+        body {
+            width: 240px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #202124;
+            color: #e8eaed;
+            margin: 0;
+        }
+
+        h2 {
+            margin: 0 0 20px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #8ab4f8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #9aa0a6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #5f6368;
+            background: #303134;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #8ab4f8;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #5f6368;
+            margin-top: 6px;
+        }
+
+        .shortcuts {
+            background: #303134;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 24px;
+        }
+
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #bdc1c6;
+        }
+
+        .shortcut-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .key {
+            background: #5f6368;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>
+        <span>QuickSpeed</span>
+    </h2>
+
+    <div class="form-group">
+        <label for="defaultSpeed">Default Speed</label>
+        <input type="number" id="defaultSpeed" step="0.1" min="0.1" max="16.0">
+        <div class="hint">Applied to all videos on load</div>
+    </div>
+
+    <div class="form-group">
+        <label for="step">Speed Step</label>
+        <input type="number" id="step" step="0.05" min="0.05" max="2.0">
+        <div class="hint">Speed adjust increment</div>
+    </div>
+
+    <div class="shortcuts">
+        <div class="shortcut-row">
+            <span>Slow Down</span>
+            <span class="key">S</span>
+        </div>
+        <div class="shortcut-row">
+            <span>Speed Up</span>
+            <span class="key">D</span>
+        </div>
+        <div class="shortcut-row">
+            <span>Reset to 1.0x</span>
+            <span class="key">R</span>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
