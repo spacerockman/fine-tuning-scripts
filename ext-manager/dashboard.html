@@ -106,6 +106,36 @@
                     </div>
                 </div>
 
+                <!-- Automation Rules View -->
+                <div id="view-rules" class="view-section">
+                    <div class="section-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>扩展名称</th>
+                                    <th>触发规则</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rulesTableBody">
+                                <!-- Rendered by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Running Logs View -->
+                <div id="view-logs" class="view-section">
+                    <div class="logs-container">
+                        <div class="logs-header">
+                            <button class="btn-sm secondary-btn" id="clearLogs">清空日志</button>
+                        </div>
+                        <div class="logs-list" id="fullLogList">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Rules Editor Overlay (Modal) -->
                 <div id="ruleModal" class="modal hidden">
                     <div class="modal-content">

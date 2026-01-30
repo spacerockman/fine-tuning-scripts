@@ -38,6 +38,25 @@ chrome.tabs.onActivated.addListener(() => {
     checkTabsAndApplyState();
 });
 
+// --- Logging System ---
+async function logAction(action, target, details) {
+    const logEntry = {
+        time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+        action,
+        target,
+        details,
+        timestamp: Date.now()
+    };
+    
+    const data = await chrome.storage.local.get(['logs']);
+    const logs = data.logs || [];
+    logs.unshift(logEntry);
+    
+    // Keep only last 100 logs
+    const trimmedLogs = logs.slice(0, 100);
+    await chrome.storage.local.set({ logs: trimmedLogs });
+}
+
 // Main Logic: The Decision Engine
 let debounceTimer;
 function checkTabsAndApplyState() {
@@ -112,6 +131,8 @@ async function performCheck() {
                 const shouldBeEnabled = neededExtensions.has(ext.id);
                 
                 if (ext.enabled !== shouldBeEnabled) {
+                    const actionType = shouldBeEnabled ? 'WAKE' : 'SLEEP';
+                    logAction(actionType, ext.name, `Triggered by active tabs state`);
                     console.log(`[Auto-Toggle] ${ext.name} -> ${shouldBeEnabled ? 'ON' : 'OFF'}`);
                     chrome.management.setEnabled(ext.id, shouldBeEnabled);
                 }
@@ -128,12 +149,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'getData') {
         Promise.all([
             chrome.management.getAll(),
-            chrome.storage.local.get(['rules', 'whitelist'])
+            chrome.storage.local.get(['rules', 'whitelist', 'pinned'])
         ]).then(([extensions, data]) => {
             sendResponse({
                 extensions,
                 rules: data.rules || {},
-                whitelist: data.whitelist || []
+                whitelist: data.whitelist || [],
+                pinned: data.pinned || []
             });
         });
         return true; 
@@ -146,7 +168,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     else if (request.action === 'toggleExt') {
         chrome.management.setEnabled(request.id, request.enabled);
+        const actionType = 'MANUAL';
+        chrome.management.get(request.id).then(ext => {
+            logAction(actionType, ext.name, `User ${request.enabled ? 'enabled' : 'disabled'} extension manually`);
+        });
         sendResponse({ success: true });
+    }
+    else if (request.action === 'getLogs') {
+        chrome.storage.local.get(['logs']).then(data => {
+            sendResponse({ logs: data.logs || [] });
+        });
+        return true;
+    }
+    else if (request.action === 'clearLogs') {
+        chrome.storage.local.set({ logs: [] }).then(() => {
+            sendResponse({ success: true });
+        });
+        return true;
+    }
+    else if (request.action === 'savePinned') {
+        chrome.storage.local.set({ pinned: request.pinned }).then(() => {
+            sendResponse({ success: true });
+        });
+        return true;
     }
     else if (request.action === 'uninstallExt') {
         chrome.management.uninstall(request.id, { showConfirmDialog: true });

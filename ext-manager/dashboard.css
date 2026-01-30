@@ -402,3 +402,113 @@ body {
   border-radius: 6px;
   cursor: pointer;
 }
+/* Pin Icon */
+.pin-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  opacity: 0.3;
+  transition: all 0.2s;
+  padding: 4px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+}
+
+.ext-card:hover .pin-btn {
+  opacity: 0.7;
+}
+
+.pin-btn:hover {
+  opacity: 1 !important;
+  color: var(--accent);
+}
+
+.pin-btn.pinned {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Automation Rules View */
+.section-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rule-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Running Logs View */
+.logs-container {
+  background: #1a1a27;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.logs-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.logs-list {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  max-height: 600px;
+  overflow-y: auto;
+  color: #a2a6be;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 100px 120px 150px 1fr;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  align-items: center;
+}
+
+.log-entry:last-child { border-bottom: none; }
+
+.log-entry:hover { background: rgba(54, 153, 255, 0.05); }
+
+.log-time { color: #565674; }
+.log-action { font-weight: 700; color: var(--accent); }
+.log-target { color: #fff; }
+.log-details { color: #6d6d80; font-size: 12px; }
+
+.log-action.WAKE { color: var(--success); }
+.log-action.SLEEP { color: var(--danger); }
+.log-action.MANUAL { color: var(--warning); }
