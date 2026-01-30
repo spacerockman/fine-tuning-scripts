@@ -153,12 +153,10 @@
   font-weight: 700;
 }
 
-/* Headers and Images span all columns */
+/* Headers span all columns */
 #daily-reader-overlay .article-content h1,
 #daily-reader-overlay .article-content h2,
-#daily-reader-overlay .article-content h3,
-#daily-reader-overlay .article-content img,
-#daily-reader-overlay .article-content figure {
+#daily-reader-overlay .article-content h3 {
   column-span: all;
   margin: 2rem 0;
 }
@@ -170,12 +168,83 @@
   padding-top: 1rem;
 }
 
+/* ========== IMAGE STYLING ========== */
+/* Default image style - fits within column */
 #daily-reader-overlay .article-content img {
-  width: 100%;
+  max-width: 100%;
+  height: auto;
   filter: grayscale(100%) contrast(1.2); /* 模拟老报纸黑白印刷感 */
-  border: 4px double #ccc;
-  padding: 5px;
+  border: 3px double #bbb;
+  padding: 4px;
   background: white;
+  display: block;
+  margin: 1rem auto;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Figure container - default inline within column */
+#daily-reader-overlay .article-content figure {
+  margin: 1.5rem 0;
+  padding: 0;
+  break-inside: avoid;
+  text-align: center;
+}
+
+/* Large images - span all columns (marked by JS) */
+#daily-reader-overlay .article-content figure.img-full,
+#daily-reader-overlay .article-content img.img-full {
+  column-span: all;
+  margin: 2.5rem auto;
+}
+
+#daily-reader-overlay .article-content figure.img-full img {
+  max-width: 90%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+/* Medium images - span all but smaller width */
+#daily-reader-overlay .article-content figure.img-medium,
+#daily-reader-overlay .article-content img.img-medium {
+  column-span: all;
+  margin: 2rem auto;
+}
+
+#daily-reader-overlay .article-content figure.img-medium img {
+  max-width: 60%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+/* Small images - float within column */
+#daily-reader-overlay .article-content figure.img-small {
+  float: right;
+  width: 45%;
+  margin: 0.5rem 0 0.5rem 1rem;
+}
+
+#daily-reader-overlay .article-content figure.img-small img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+}
+
+/* Figure Caption - Newspaper style */
+#daily-reader-overlay .article-content figcaption {
+  font-family: 'Old Standard TT', serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #555;
+  text-align: center;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-top: 1px solid #ddd;
+  line-height: 1.4;
+}
+
+#daily-reader-overlay .article-content figure.img-small figcaption {
+  font-size: 0.75rem;
+  text-align: left;
 }
 
 #daily-reader-overlay .article-content blockquote {
@@ -206,6 +275,11 @@
   #daily-reader-overlay .article-content {
     column-count: 2;
   }
+  
+  /* Medium images stretch more on tablet */
+  #daily-reader-overlay .article-content figure.img-medium img {
+    max-width: 80%;
+  }
 }
 
 @media (max-width: 700px) {
@@ -214,5 +288,21 @@
   }
   #daily-reader-overlay .masthead h1 {
     font-size: 3rem;
+  }
+  
+  /* All images full width on mobile */
+  #daily-reader-overlay .article-content figure.img-small {
+    float: none;
+    width: 100%;
+    margin: 1.5rem 0;
+  }
+  
+  #daily-reader-overlay .article-content figure.img-medium img,
+  #daily-reader-overlay .article-content figure.img-full img {
+    max-width: 100%;
+  }
+  
+  #daily-reader-overlay .article-content figure.img-small figcaption {
+    text-align: center;
   }
 }
