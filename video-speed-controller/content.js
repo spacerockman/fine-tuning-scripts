@@ -2,27 +2,79 @@ const TAG = '[QuickSpeed]';
 const DEFAULT_SPEED = 1.5;
 const OVERLAY_CLASS = 'quick-speed-overlay';
 
+const OVERLAY_STYLE = `
+.${OVERLAY_CLASS} {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  z-index: 2147483647; 
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  opacity: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.${OVERLAY_CLASS}.visible {
+  opacity: 1;
+}
+.${OVERLAY_CLASS}.fading {
+  opacity: 0.2;
+}
+`;
+
 let settings = {
   defaultSpeed: DEFAULT_SPEED,
   step: 0.25
 };
 
 const allVideos = new Set();
+const rootsWithStyles = new WeakSet();
 
 // Initialize settings from storage
 chrome.storage.sync.get(['defaultSpeed', 'step'], (result) => {
   if (result.defaultSpeed) settings.defaultSpeed = parseFloat(result.defaultSpeed);
   if (result.step) settings.step = parseFloat(result.step);
-  
-  // Initial scan
   scanForVideos();
 });
 
 // Watch for storage changes
-chrome.storage.onChanged.addListener((changes, namespace) => {
+chrome.storage.onChanged.addListener((changes) => {
   if (changes.defaultSpeed) settings.defaultSpeed = parseFloat(changes.defaultSpeed.newValue);
   if (changes.step) settings.step = parseFloat(changes.step.newValue);
 });
+
+
+function injectStyles(root) {
+    if (!root || rootsWithStyles.has(root)) return;
+    
+    // For document, we look for head
+    // For shadow roots, we just append
+    const style = document.createElement('style');
+    style.textContent = OVERLAY_STYLE;
+    
+    try {
+        if (root === document) {
+            (document.head || document.documentElement).appendChild(style);
+        } else {
+            root.appendChild(style);
+        }
+        rootsWithStyles.add(root);
+    } catch (e) {
+        console.warn(TAG, 'Failed to inject styles into root:', root, e);
+    }
+}
 
 
 function getOverlay(video) {
@@ -32,13 +84,15 @@ function getOverlay(video) {
 function createOverlay(video) {
   if (video._qsOverlay) return video._qsOverlay;
 
+  // Find the root (document or shadow root)
+  let root = video.getRootNode();
+  injectStyles(root);
+
   const overlay = document.createElement('div');
   overlay.className = OVERLAY_CLASS;
   overlay.textContent = `${video.playbackRate.toFixed(1)}x`;
   
-  // Insert overlay into the parent of the video
   if (video.parentNode) {
-      // Ensure parent is positioned so absolute positioning works
       const parentStyle = window.getComputedStyle(video.parentNode);
       if (parentStyle.position === 'static') {
           video.parentNode.style.position = 'relative';

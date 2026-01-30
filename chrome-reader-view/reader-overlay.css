@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Old+Standard+TT:ital@0;1&display=swap');
+
+:root {
+  --newspaper-bg: #f4f1ea; /* 更深一点的纸张底色 */
+  --newspaper-text: #1a1a1a;
+  --newspaper-border: #333;
+  --newspaper-accent: #8b0000;
+  --paper-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+#daily-reader-overlay * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#daily-reader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--newspaper-bg);
+  background-image: var(--paper-texture);
+  z-index: 2147483647;
+  overflow-y: auto;
+  color: var(--newspaper-text);
+  font-family: 'Lora', Georgia, serif;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Control Panel - More discreet */
+#daily-reader-controls {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: flex;
+  gap: 10px;
+  z-index: 10002;
+  border: 1px solid #ccc;
+  font-family: sans-serif;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+
+#daily-reader-controls:hover {
+  opacity: 1;
+}
+
+#daily-reader-controls button {
+  background: none;
+  border: 1px solid #999;
+  border-radius: 2px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+/* Authentic Newspaper Layout */
+#daily-reader-overlay .container {
+  width: 95%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 0 100px 0;
+}
+
+/* Masthead - The classic newspaper header */
+#daily-reader-overlay .masthead {
+  text-align: center;
+  margin-bottom: 50px;
+  border-top: 4px solid var(--newspaper-border);
+  border-bottom: 4px solid var(--newspaper-border);
+  padding: 20px 0;
+}
+
+#daily-reader-overlay .masthead h1 {
+  font-family: 'Old Standard TT', serif;
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+#daily-reader-overlay .masthead .metadata {
+  font-family: 'Old Standard TT', serif;
+  font-style: italic;
+  font-size: 1rem;
+  border-top: 1px solid #666;
+  padding-top: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Article Title - Span all columns */
+#daily-reader-overlay .article-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  text-align: center;
+  column-span: all;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 20px;
+}
+
+#daily-reader-overlay .article-byline {
+  font-family: sans-serif;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  margin-bottom: 40px;
+  text-align: center;
+  color: #444;
+}
+
+/* MULTI-COLUMN CONTENT */
+#daily-reader-overlay .article-content {
+  column-count: 3; /* 经典三栏 */
+  column-gap: 40px;
+  column-rule: 1px solid #ccc;
+  line-height: 1.6;
+  font-size: 1.05rem;
+  text-align: justify;
+}
+
+#daily-reader-overlay .article-content p,
+#daily-reader-overlay .article-content li {
+  margin-bottom: 0.8rem;
+  text-indent: 1.5em;
+  break-inside: avoid-column;
+}
+
+#daily-reader-overlay .article-content p:first-of-type {
+  text-indent: 0;
+}
+
+#daily-reader-overlay .article-content p:first-of-type::first-letter {
+  float: left;
+  font-family: 'Old Standard TT', serif;
+  font-size: 4.5rem;
+  line-height: 0.85;
+  padding-right: 10px;
+  padding-top: 4px;
+  color: var(--newspaper-text);
+  font-weight: 700;
+}
+
+/* Headers and Images span all columns */
+#daily-reader-overlay .article-content h1,
+#daily-reader-overlay .article-content h2,
+#daily-reader-overlay .article-content h3,
+#daily-reader-overlay .article-content img,
+#daily-reader-overlay .article-content figure {
+  column-span: all;
+  margin: 2rem 0;
+}
+
+#daily-reader-overlay .article-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  border-top: 2px solid var(--newspaper-border);
+  padding-top: 1rem;
+}
+
+#daily-reader-overlay .article-content img {
+  width: 100%;
+  filter: grayscale(100%) contrast(1.2); /* 模拟老报纸黑白印刷感 */
+  border: 4px double #ccc;
+  padding: 5px;
+  background: white;
+}
+
+#daily-reader-overlay .article-content blockquote {
+  column-span: all;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-style: italic;
+  text-align: center;
+  margin: 3rem auto;
+  padding: 2rem;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  max-width: 80%;
+}
+
+#daily-reader-overlay .article-content a {
+  color: var(--newspaper-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+#daily-reader-overlay .article-content a:hover {
+  color: var(--newspaper-accent);
+}
+
+@media (max-width: 1000px) {
+  #daily-reader-overlay .article-content {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  #daily-reader-overlay .article-content {
+    column-count: 1;
+  }
+  #daily-reader-overlay .masthead h1 {
+    font-size: 3rem;
+  }
+}
