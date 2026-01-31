@@ -1,64 +1,70 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;1,400&family=Old+Standard+TT:ital@0;1&display=swap');
 
 :root {
-  --newspaper-bg: #f4f1ea; /* 更深一点的纸张底色 */
+  --newspaper-bg: #f4f1ea; 
   --newspaper-text: #1a1a1a;
   --newspaper-border: #333;
   --newspaper-accent: #8b0000;
   --paper-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  
+  /* 动态变量控制 */
+  --font-body: 'EB Garamond', Georgia, serif;
+  --line-spacing: 1.55;
+  --dynamic-font-size: 1.55rem;
 }
 
-#daily-reader-overlay * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ... 保持原有样式直到控制面板 ... */
 
-#daily-reader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: var(--newspaper-bg);
-  background-image: var(--paper-texture);
-  z-index: 2147483647;
-  overflow-y: auto;
-  color: var(--newspaper-text);
-  font-family: 'EB Garamond', Georgia, serif;
-  display: flex;
-  flex-direction: column;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Control Panel - More discreet */
 #daily-reader-controls {
   position: fixed;
-  top: 15px;
-  right: 15px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 5px 10px;
-  border-radius: 4px;
+  top: 20px;
+  right: 20px;
+  background: white;
+  padding: 8px 15px;
+  border-radius: 30px;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   z-index: 10002;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   font-family: sans-serif;
-  opacity: 0.3;
-  transition: opacity 0.3s;
+  opacity: 0.8;
+  transition: opacity 0.3s, transform 0.3s;
 }
 
 #daily-reader-controls:hover {
   opacity: 1;
 }
 
+#daily-reader-controls .group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-right: 1px solid #eee;
+  padding-right: 12px;
+}
+
+#daily-reader-controls .group:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
 #daily-reader-controls button {
-  background: none;
-  border: 1px solid #999;
-  border-radius: 2px;
-  padding: 2px 8px;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 10px;
   cursor: pointer;
   font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  transition: all 0.2s;
+}
+
+#daily-reader-controls button:hover {
+  background: #eee;
+  border-color: #ccc;
 }
 
 /* Authentic Newspaper Layout */
@@ -111,6 +117,23 @@
   padding-bottom: 20px;
 }
 
+#daily-reader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--newspaper-bg);
+  background-image: var(--paper-texture);
+  z-index: 2147483647;
+  overflow-y: auto;
+  color: var(--newspaper-text);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
 #daily-reader-overlay .article-byline {
   font-family: sans-serif;
   text-transform: uppercase;
@@ -126,9 +149,11 @@
   column-count: 3; /* 经典三栏 */
   column-gap: 40px;
   column-rule: 1px solid #ccc;
-  line-height: 1.55;
-  font-size: 1.55rem;
+  line-height: var(--line-spacing);
+  font-size: var(--dynamic-font-size);
   text-align: justify;
+  text-justify: inter-character; /* 优化大字号下的两端对齐效果 */
+  letter-spacing: -0.015em;      /* 略微收紧字间距，让排版更紧凑 */
 }
 
 #daily-reader-overlay .article-content p,

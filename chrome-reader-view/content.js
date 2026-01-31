@@ -62,10 +62,23 @@
 
     overlay.innerHTML = `
       <div id="daily-reader-controls">
-        <button id="font-dec">Smaller</button>
-        <button id="font-inc">Larger</button>
-        <button id="mode-toggle" style="background: #000; color: #fff;">Paper Mode</button>
-        <button id="reader-close-btn" style="background: var(--newspaper-accent); color: white; border: none;">EXIT READER</button>
+        <div class="group">
+          <span style="font-size:10px; color:#888; margin-right:5px;">Size</span>
+          <button id="font-dec">-</button>
+          <button id="font-inc">+</button>
+        </div>
+        <div class="group">
+          <span style="font-size:10px; color:#888; margin-right:5px;">Line</span>
+          <button id="line-dec">-</button>
+          <button id="line-inc">+</button>
+        </div>
+        <div class="group">
+          <button id="font-cycle">EB Garamond</button>
+        </div>
+        <div class="group">
+          <button id="mode-toggle" style="background: #000; color: #fff;">Paper Mode</button>
+        </div>
+        <button id="reader-close-btn" style="background: var(--newspaper-accent); color: white; border: none; border-radius: 20px;">EXIT</button>
       </div>
       <div class="container">
         <div class="masthead">
@@ -104,16 +117,33 @@
     document.getElementById('reader-close-btn').onclick = removeOverlay;
     
     let fontSize = 1.55;
-    const contentDiv = document.getElementById('reader-article-content');
-    contentDiv.style.fontSize = fontSize + 'rem';
+    let lineSpacing = 1.55;
+    let fontIndex = 0;
+    const fonts = [
+      { name: 'EB Garamond', value: "'EB Garamond', serif" },
+      { name: 'Lora', value: "'Lora', serif" },
+      { name: 'System Sans', value: "system-ui, -apple-system, sans-serif" }
+    ];
     
-    document.getElementById('font-inc').onclick = () => {
-      fontSize += 0.1;
-      contentDiv.style.fontSize = fontSize + 'rem';
+    const updateStyles = () => {
+      overlay.style.setProperty('--dynamic-font-size', fontSize + 'rem');
+      overlay.style.setProperty('--line-spacing', lineSpacing);
+      overlay.style.setProperty('--font-body', fonts[fontIndex].value);
+      document.getElementById('font-cycle').textContent = fonts[fontIndex].name;
     };
-    document.getElementById('font-dec').onclick = () => {
-      fontSize = Math.max(0.8, fontSize - 0.1);
-      contentDiv.style.fontSize = fontSize + 'rem';
+
+    // Font Size
+    document.getElementById('font-inc').onclick = () => { fontSize += 0.1; updateStyles(); };
+    document.getElementById('font-dec').onclick = () => { fontSize = Math.max(1, fontSize - 0.1); updateStyles(); };
+
+    // Line Spacing
+    document.getElementById('line-inc').onclick = () => { lineSpacing += 0.1; updateStyles(); };
+    document.getElementById('line-dec').onclick = () => { lineSpacing = Math.max(1.1, lineSpacing - 0.1); updateStyles(); };
+
+    // Font Cycle
+    document.getElementById('font-cycle').onclick = () => {
+      fontIndex = (fontIndex + 1) % fonts.length;
+      updateStyles();
     };
 
     // Toggle Ink Mode
@@ -121,8 +151,8 @@
       overlay.classList.toggle('ink-mode');
       const isInk = overlay.classList.contains('ink-mode');
       e.target.textContent = isInk ? "Paper Mode" : "Ink Mode";
-      e.target.style.background = isInk ? "#000" : "none";
-      e.target.style.color = isInk ? "#fff" : "inherit";
+      e.target.style.background = isInk ? "#000" : "#f7f7f7";
+      e.target.style.color = isInk ? "#fff" : "#555";
     };
     
     // Smooth fade in
