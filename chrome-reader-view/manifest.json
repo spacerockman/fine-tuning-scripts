@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "The Daily Reader",
   "version": "1.0",
-  "description": "A premium, newspaper-style reader mode for Chrome.",
+  "description": "A premium, distraction-free reader view inspired by safari.",
   "permissions": [
     "activeTab",
     "scripting"

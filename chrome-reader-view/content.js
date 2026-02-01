@@ -1,6 +1,12 @@
 (function() {
   let readerActive = false;
   let overlay = null;
+  let onKeydown = null;
+  let currentSettings = {
+    theme: 'theme-paper', // Default to Paper as requested
+    font: 'font-preview-charter', // Serif fits paper better
+    fontSize: 18
+  };
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "toggle-reader-view") {
@@ -17,91 +23,106 @@
   }
 
   function showOverlay() {
-    console.log("The Daily Reader: Extracting content...");
-    
-    // Clone document to avoid modifying the original page
     const documentClone = document.cloneNode(true);
-    
-    // Clean up visibility some sites hide content until scroll
     const reader = new Readability(documentClone);
     const article = reader.parse();
 
-    // Find a featured image if the article content doesn't start with one
-    let featuredImage = null;
-    try {
-      // 1. Check OpenGraph meta tags
-      featuredImage = document.querySelector('meta[property="og:image"]')?.content;
-      
-      // 2. If no OG image, check for a large image at the top of the original page
-      if (!featuredImage) {
-        const topImgs = Array.from(document.querySelectorAll('img')).slice(0, 5);
-        const largeImg = topImgs.find(img => img.naturalWidth > 600 && img.getBoundingClientRect().top < 500);
-        if (largeImg) featuredImage = largeImg.src;
-      }
-    } catch (e) {
-      console.log("Featured image extraction failed", e);
-    }
-
     if (!article || !article.content) {
-      alert("抱歉，此页面无法转换成阅读模式。内容提取失败。");
+      alert("Reader View not available for this page.");
       return;
     }
 
+    // --- Featured Image Extraction ---
+    let featuredImage = null;
+    try {
+      // 1. Try OpenGraph
+      featuredImage = document.querySelector('meta[property="og:image"]')?.content;
+      
+      // 2. Fallback: Find largest image above fold
+      if (!featuredImage) {
+        const images = Array.from(document.querySelectorAll('img'));
+        // Sort by area, favoring images near the top
+        const candidate = images
+          .filter(img => img.naturalWidth > 400 && img.naturalHeight > 200 && img.getBoundingClientRect().top < 800)
+          .sort((a, b) => (b.naturalWidth * b.naturalHeight) - (a.naturalWidth * a.naturalHeight))[0];
+        
+        if (candidate) featuredImage = candidate.src;
+      }
+
+      // 3. Avoid duplicates: Check if Readability already captured this image
+      if (featuredImage && article.content.includes(featuredImage)) {
+        featuredImage = null; 
+      }
+    } catch (e) {
+      console.warn("Featured image extraction failed", e);
+    }
+
     readerActive = true;
-    
     overlay = document.createElement('div');
     overlay.id = 'daily-reader-overlay';
-    overlay.classList.add('ink-mode'); // Default to Ink Mode
     
-    const today = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric', 
-      weekday: 'long' 
-    });
+    // Apply default settings
+    overlay.classList.add(currentSettings.theme);
+    overlay.style.setProperty('--font-size', currentSettings.fontSize + 'px');
+    applyFont(currentSettings.font);
 
+    // Initial controls HTML
     overlay.innerHTML = `
-      <div id="daily-reader-controls">
-        <div class="group">
-          <span style="font-size:10px; color:#888; margin-right:5px;">Size</span>
-          <button id="font-dec">-</button>
-          <button id="font-inc">+</button>
+      <div id="reader-control-bar">
+        <div id="reader-controls">
+          <button class="control-btn" id="appearance-toggle" title="Text Appearance">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v13M9 19V9h6v10M9 14h6" />
+              <text x="6" y="16" font-family="sans-serif" font-size="10" stroke="none" fill="currentColor">Aa</text>
+            </svg>
+          </button>
+          <div class="control-separator"></div>
+          <button class="control-btn" id="reader-close-btn" title="Close Reader View">✕</button>
         </div>
-        <div class="group">
-          <span style="font-size:10px; color:#888; margin-right:5px;">Line</span>
-          <button id="line-dec">-</button>
-          <button id="line-inc">+</button>
+
+        <div id="appearance-menu">
+          <!-- Font Size -->
+          <div class="font-size-control">
+            <div class="font-size-btn small-a" id="font-dec">A</div>
+            <div class="font-size-btn large-a" id="font-inc">A</div>
+          </div>
+          
+          <!-- Themes -->
+          <div class="theme-selector">
+            <div class="theme-option theme-btn-white" data-theme="theme-white" title="White"></div>
+            <div class="theme-option theme-btn-paper" data-theme="theme-paper" title="Paper"></div>
+            <div class="theme-option theme-btn-sepia" data-theme="theme-sepia" title="Sepia"></div>
+            <div class="theme-option theme-btn-gray" data-theme="theme-gray" title="Gray"></div>
+            <div class="theme-option theme-btn-black" data-theme="theme-black" title="Black"></div>
+          </div>
+
+          <!-- Fonts -->
+          <div class="font-family-list">
+            <div class="font-option font-preview-charter" data-font="font-preview-charter">Charter</div>
+            <div class="font-option font-preview-athelas" data-font="font-preview-athelas">Athelas</div>
+            <div class="font-option font-preview-iowan" data-font="font-preview-iowan">Iowan</div>
+            <div class="font-option font-preview-system" data-font="font-preview-system">System Sans</div>
+            <div class="font-option font-preview-seravek" data-font="font-preview-seravek">Seravek</div>
+          </div>
         </div>
-        <div class="group">
-          <button id="font-cycle">EB Garamond</button>
-        </div>
-        <div class="group">
-          <button id="mode-toggle" style="background: #000; color: #fff;">Paper Mode</button>
-        </div>
-        <button id="reader-close-btn" style="background: var(--newspaper-accent); color: white; border: none; border-radius: 20px;">EXIT</button>
       </div>
-      <div class="container">
-        <div class="masthead">
-          <div style="font-family: 'Old Standard TT', serif; font-size: 0.8rem; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span>Weather: Fair & Clear</span>
-            <span>London, Saturday Edition</span>
-            <span>Established 1851</span>
-          </div>
-          <h1>The Daily Chronicle</h1>
-          <div class="metadata">
-            <span>VOL. CLXXIV ... No. 60,342</span>
-            <span>${today}</span>
-            <span>Price: Two Cents</span>
+
+      <div class="reader-container">
+        <div class="reader-header">
+          <h1 class="article-title">${article.title}</h1>
+          <div class="article-meta">
+            ${article.byline ? `<span>${article.byline}</span> • ` : ''}
+            <span>${article.siteName || new URL(window.location.href).hostname}</span>
           </div>
         </div>
-        <h2 class="article-title">${article.title}</h2>
-        <div class="article-byline">
-          By our ${article.byline || 'Special Correspondent'} — Reported from ${article.siteName || new URL(window.location.href).hostname}
-        </div>
-        <div class="article-content" id="reader-article-content">
-          ${(!article.content.trim().startsWith('<img') && !article.content.trim().startsWith('<figure') && featuredImage) 
-            ? `<figure class="img-full"><img src="${featuredImage}"><figcaption>Featured Image</figcaption></figure>` 
-            : ''}
+        
+        ${featuredImage ? `
+        <figure class="hero-image" style="margin: 0 0 40px 0; text-align: center;">
+          <img src="${featuredImage}" style="max-height: 500px; object-fit: contain; width: 100%; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        </figure>
+        ` : ''}
+
+        <div class="article-content" id="reader-content-body">
           ${article.content}
         </div>
       </div>
@@ -110,130 +131,132 @@
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
 
-    // Process images - smart sizing based on dimensions
-    processImages();
+    // Post-process content to add dividers and fix layout
+    processContent();
 
     // Event Listeners
-    document.getElementById('reader-close-btn').onclick = removeOverlay;
-    
-    let fontSize = 1.55;
-    let lineSpacing = 1.55;
-    let fontIndex = 0;
-    const fonts = [
-      { name: 'EB Garamond', value: "'EB Garamond', serif" },
-      { name: 'Lora', value: "'Lora', serif" },
-      { name: 'System Sans', value: "system-ui, -apple-system, sans-serif" }
-    ];
-    
-    const updateStyles = () => {
-      overlay.style.setProperty('--dynamic-font-size', fontSize + 'rem');
-      overlay.style.setProperty('--line-spacing', lineSpacing);
-      overlay.style.setProperty('--font-body', fonts[fontIndex].value);
-      document.getElementById('font-cycle').textContent = fonts[fontIndex].name;
-    };
+    setupEventListeners();
 
-    // Font Size
-    document.getElementById('font-inc').onclick = () => { fontSize += 0.1; updateStyles(); };
-    document.getElementById('font-dec').onclick = () => { fontSize = Math.max(1, fontSize - 0.1); updateStyles(); };
-
-    // Line Spacing
-    document.getElementById('line-inc').onclick = () => { lineSpacing += 0.1; updateStyles(); };
-    document.getElementById('line-dec').onclick = () => { lineSpacing = Math.max(1.1, lineSpacing - 0.1); updateStyles(); };
-
-    // Font Cycle
-    document.getElementById('font-cycle').onclick = () => {
-      fontIndex = (fontIndex + 1) % fonts.length;
-      updateStyles();
-    };
-
-    // Toggle Ink Mode
-    document.getElementById('mode-toggle').onclick = (e) => {
-      overlay.classList.toggle('ink-mode');
-      const isInk = overlay.classList.contains('ink-mode');
-      e.target.textContent = isInk ? "Paper Mode" : "Ink Mode";
-      e.target.style.background = isInk ? "#000" : "#f7f7f7";
-      e.target.style.color = isInk ? "#fff" : "#555";
-    };
-    
-    // Smooth fade in
+    // Initial smooth fade in
     overlay.style.opacity = '0';
     requestAnimationFrame(() => {
       overlay.style.opacity = '1';
     });
   }
 
-  // Smart image processing - classify images by size and wrap in figure if needed
-  function processImages() {
-    const contentDiv = document.getElementById('reader-article-content');
-    if (!contentDiv) return;
+  function processContent() {
+    const contentBody = document.getElementById('reader-content-body');
+    if (!contentBody) return;
 
-    const images = contentDiv.querySelectorAll('img');
-    
-    images.forEach((img) => {
-      // Function to classify and style the image
-      const classifyImage = () => {
-        const naturalWidth = img.naturalWidth;
-        const naturalHeight = img.naturalHeight;
-        
-        // Skip tiny images (likely icons, spacers, or tracking pixels)
-        if (naturalWidth < 50 || naturalHeight < 50) {
-          img.style.display = 'none';
-          return;
-        }
-        
-        // Determine size class based on image dimensions
-        let sizeClass;
-        if (naturalWidth >= 600 || (naturalWidth >= 400 && naturalHeight >= 300)) {
-          sizeClass = 'img-full';  // Large images - span all columns
-        } else if (naturalWidth >= 300 || naturalHeight >= 250) {
-          sizeClass = 'img-medium';  // Medium images - span all, smaller width
-        } else {
-          sizeClass = 'img-small';  // Small images - float within column
-        }
-        
-        // Check if image is already in a figure
-        let figure = img.closest('figure');
-        
-        if (!figure) {
-          // Wrap image in figure element
-          figure = document.createElement('figure');
-          img.parentNode.insertBefore(figure, img);
-          figure.appendChild(img);
-          
-          // Try to find a caption from alt text or nearby text
-          const altText = img.alt;
-          if (altText && altText.length > 10) {
-            const caption = document.createElement('figcaption');
-            caption.textContent = altText;
-            figure.appendChild(caption);
-          }
-        }
-        
-        // Apply size class to figure
-        figure.classList.add(sizeClass);
-        
-        console.log(`Image classified: ${sizeClass} (${naturalWidth}x${naturalHeight})`);
-      };
+    // 1. Inject Dividers before Headers (H2, H3)
+    const headers = contentBody.querySelectorAll('h2');
+    headers.forEach((header, index) => {
+      // Don't put a divider before the very first element if it's a header
+      if (index === 0 && header === contentBody.firstElementChild) return;
 
-      // If image is already loaded, classify immediately
-      if (img.complete && img.naturalWidth > 0) {
-        classifyImage();
-      } else {
-        // Wait for image to load
-        img.onload = classifyImage;
-        img.onerror = () => {
-          // Hide broken images
-          img.style.display = 'none';
-        };
-      }
+      const divider = document.createElement('div');
+      divider.className = 'section-divider';
+      divider.textContent = '❖'; // Classic divider symbol
+      
+      header.parentNode.insertBefore(divider, header);
+    });
+
+    // 2. Handle HRs ensuring they look good
+    const hrs = contentBody.querySelectorAll('hr');
+    hrs.forEach(hr => {
+      // If HR is already styled by CSS, we might not need to do much, 
+      // but we can replace it with our fancy divider if we want uniformity.
+      // For now, let CSS handle HR styling.
     });
   }
 
+  function setupEventListeners() {
+    // Close
+    document.getElementById('reader-close-btn').addEventListener('click', removeOverlay);
+
+    // Toggle Menu
+    const appearanceToggle = document.getElementById('appearance-toggle');
+    const appearanceMenu = document.getElementById('appearance-menu');
+
+    appearanceToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      appearanceMenu.classList.toggle('open');
+      overlay.classList.toggle('controls-visible');
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (!appearanceMenu.contains(e.target) && !appearanceToggle.contains(e.target)) {
+        appearanceMenu.classList.remove('open');
+        overlay.classList.remove('controls-visible');
+      }
+    });
+
+    // Font Size
+    document.getElementById('font-inc').addEventListener('click', () => {
+      currentSettings.fontSize = Math.min(32, currentSettings.fontSize + 2);
+      overlay.style.setProperty('--font-size', currentSettings.fontSize + 'px');
+    });
+
+    document.getElementById('font-dec').addEventListener('click', () => {
+      currentSettings.fontSize = Math.max(12, currentSettings.fontSize - 2);
+      overlay.style.setProperty('--font-size', currentSettings.fontSize + 'px');
+    });
+
+    // Theme Switching
+    document.querySelectorAll('.theme-option').forEach(btn => {
+      if (btn.dataset.theme === currentSettings.theme) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        overlay.classList.remove('theme-white', 'theme-paper', 'theme-sepia', 'theme-gray', 'theme-black');
+        document.querySelectorAll('.theme-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        currentSettings.theme = btn.dataset.theme;
+        overlay.classList.add(currentSettings.theme);
+      });
+    });
+
+    // Font Switching
+    document.querySelectorAll('.font-option').forEach(btn => {
+       if (btn.dataset.font === currentSettings.font) btn.classList.add('selected');
+       btn.addEventListener('click', () => {
+         document.querySelectorAll('.font-option').forEach(b => b.classList.remove('selected'));
+         btn.classList.add('selected');
+         currentSettings.font = btn.dataset.font;
+         applyFont(currentSettings.font);
+       });
+    });
+
+    // Keyboard Shortcuts
+    onKeydown = function(e) {
+      if (e.key === 'Escape') {
+        removeOverlay();
+      }
+    };
+    document.addEventListener('keydown', onKeydown);
+  }
+
+  function applyFont(fontClass) {
+    let fontFamily = "";
+    switch(fontClass) {
+      case 'font-preview-charter': fontFamily = '"Charter", "Bitstream Charter", "Sitka Text", serif'; break;
+      case 'font-preview-athelas': fontFamily = '"Athelas", "Seravek", "Sitka Text", serif'; break;
+      case 'font-preview-iowan': fontFamily = '"Iowan Old Style", "Sitka Text", serif'; break;
+      case 'font-preview-seravek': fontFamily = '"Seravek", "Gill Sans Nova", sans-serif'; break;
+      case 'font-preview-system': 
+      default:
+        fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    }
+    overlay.style.setProperty('--font-family', fontFamily);
+  }
+
   function removeOverlay() {
+    if (onKeydown) {
+      document.removeEventListener('keydown', onKeydown);
+      onKeydown = null;
+    }
     if (overlay) {
       overlay.style.opacity = '0';
       setTimeout(() => {
-        overlay.remove();
+        if (overlay) overlay.remove();
         overlay = null;
         document.body.style.overflow = '';
         readerActive = false;
