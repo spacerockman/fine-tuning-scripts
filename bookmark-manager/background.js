@@ -13,7 +13,7 @@ chrome.action.onClicked.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'startScan') {
     if (!isScanning) {
-      scanBookmarks();
+      scanBookmarks(request.folderId);
     }
     sendResponse({ success: true, isScanning: true });
   } else if (request.action === 'getStatus') {
@@ -31,7 +31,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function scanBookmarks() {
+async function scanBookmarks(folderId = 'root') {
   isScanning = true;
   brokenBookmarks = [];
   
@@ -39,8 +39,14 @@ async function scanBookmarks() {
     // Notify UI scan started
     broadcastStatus('scan_started');
 
-    // Get all bookmarks first
-    const tree = await chrome.bookmarks.getTree();
+    // Get bookmarks based on folderId
+    let tree;
+    if (folderId && folderId !== 'root') {
+        tree = await chrome.bookmarks.getSubTree(folderId);
+    } else {
+        tree = await chrome.bookmarks.getTree();
+    }
+    
     let allLinks = [];
     extractLinks(tree[0], allLinks);
 

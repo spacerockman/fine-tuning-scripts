@@ -1,4 +1,5 @@
 // State
+console.log('[Bookmark Manager] v1.0.1 loaded');
 let allBroken = [];
 let selectedIds = new Set();
 let isScanning = false;
@@ -11,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('scanBtn').addEventListener('click', startScan);
   document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
   document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelected);
+  
+  // Initialize folders
+  await initializeFolders();
   
   // Message Listener
   chrome.runtime.onMessage.addListener((message) => {
@@ -43,16 +47,20 @@ function setScanningState(scanning) {
   const progressBox = document.getElementById('scanProgressBox');
 
   if (scanning) {
-    scanBtn.disabled = true;
-    scanBtn.innerHTML = '<span class="loader-xs"></span> 扫描中...';
-    emptyState.classList.add('hidden');
-    listState.classList.add('hidden');
-    scanningState.classList.remove('hidden');
-    progressBox.classList.remove('hidden');
+    if (scanBtn) {
+      scanBtn.disabled = true;
+      scanBtn.innerHTML = '<span class="loader-xs"></span> 扫描中...';
+    }
+    if (emptyState) emptyState.classList.add('hidden');
+    if (listState) listState.classList.add('hidden');
+    if (scanningState) scanningState.classList.remove('hidden');
+    if (progressBox) progressBox.classList.remove('hidden');
   } else {
-    scanBtn.disabled = false;
-    scanBtn.innerHTML = '<span class="btn-icon">🔍</span> 全面扫描';
-    scanningState.classList.add('hidden');
+    if (scanBtn) {
+      scanBtn.disabled = false;
+      scanBtn.innerHTML = '<span class="btn-icon">🔍</span> 全面扫描';
+    }
+    if (scanningState) scanningState.classList.add('hidden');
   }
 }
 
@@ -63,11 +71,11 @@ function updateProgress(data) {
   const brokenCount = document.getElementById('brokenCount');
   
   // Update sidebar stats
-  box.classList.remove('hidden');
+  if (box) box.classList.remove('hidden');
   const percent = Math.round((data.processed / data.total) * 100);
-  bar.style.width = `${percent}%`;
-  text.textContent = `${data.processed} / ${data.total}`;
-  brokenCount.textContent = data.broken;
+  if (bar) bar.style.width = `${percent}%`;
+  if (text) text.textContent = `${data.processed} / ${data.total}`;
+  if (brokenCount) brokenCount.textContent = data.broken;
 
   // Update Visualizer
   const scanPercent = document.getElementById('scanPercent');
@@ -95,8 +103,48 @@ function updateProgress(data) {
 }
 
 async function startScan() {
+  const folderSelect = document.getElementById('folderSelect');
+  const folderId = folderSelect ? folderSelect.value : 'root';
   setScanningState(true);
-  await chrome.runtime.sendMessage({ action: 'startScan' });
+  await chrome.runtime.sendMessage({ 
+    action: 'startScan',
+    folderId: folderId
+  });
+}
+
+async function initializeFolders() {
+  const select = document.getElementById('folderSelect');
+  try {
+    const tree = await chrome.bookmarks.getTree();
+    const folders = [];
+    
+    function findFolders(node, depth = 0) {
+      if (node.children) {
+        if (node.id !== '0') { // Skip root of root
+           folders.push({
+             id: node.id,
+             title: node.title || '无标题文件夹',
+             depth: depth
+           });
+        }
+        node.children.forEach(child => findFolders(child, depth + 1));
+      }
+    }
+    
+    findFolders(tree[0]);
+    
+    // Skip the very first "Bookmarks Bar" and "Other Bookmarks" hierarchy if root is selected
+    // but actually it's better to show them all for choice
+    
+    folders.forEach(folder => {
+      const option = document.createElement('option');
+      option.value = folder.id;
+      option.textContent = '  '.repeat(Math.max(0, folder.depth - 1)) + folder.title;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Failed to load folders:', error);
+  }
 }
 
 async function loadResults() {
@@ -184,9 +232,11 @@ function updateSelectionUI() {
   const deleteBtn = document.getElementById('deleteSelectedBtn');
   const selectAll = document.getElementById('selectAll');
   
-  countSpan.textContent = selectedIds.size;
-  deleteBtn.disabled = selectedIds.size === 0;
+  if (countSpan) countSpan.textContent = selectedIds.size;
+  if (deleteBtn) deleteBtn.disabled = selectedIds.size === 0;
   
+  if (!selectAll) return;
+
   // Update Select All checkbox state partial/full
   if (selectedIds.size === 0) {
     selectAll.checked = false;
@@ -227,7 +277,10 @@ async function deleteSelected() {
 }
 
 function updateStats() {
-  document.getElementById('brokenCount').textContent = allBroken.length;
+  const brokenCount = document.getElementById('brokenCount');
+  if (brokenCount) {
+    brokenCount.textContent = allBroken.length;
+  }
 }
 
 function showToast(msg) {
