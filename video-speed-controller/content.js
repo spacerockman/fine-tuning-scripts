@@ -56,6 +56,33 @@ chrome.storage.onChanged.addListener((changes) => {
 });
 
 
+// YouTube SPA navigation support
+window.addEventListener('yt-navigate-finish', () => {
+    console.log(TAG, 'YouTube navigation finished');
+    // Give it a moment to render the player
+    setTimeout(scanForVideos, 500);
+    setTimeout(scanForVideos, 2000);
+});
+
+// Generic SPA navigation support
+window.addEventListener('popstate', () => {
+    setTimeout(scanForVideos, 1000);
+});
+
+// URL state tracking for generic SPA support
+let lastUrl = location.href;
+setInterval(() => {
+    if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        console.log(TAG, 'URL changed detected');
+        scanForVideos();
+        // Dynamic content might take a while
+        setTimeout(scanForVideos, 1000);
+        setTimeout(scanForVideos, 3000);
+    }
+}, 1000);
+
+
 function injectStyles(root) {
     if (!root || rootsWithStyles.has(root)) return;
     
@@ -250,4 +277,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Periodic scan to catch anything missed (e.g. rapid DOM changes or deep weirdness)
-setInterval(scanForVideos, 2000);
+// Reduced interval as we now have more event-based triggers, but kept as safety net
+setInterval(scanForVideos, 5000);
+
+// Run initial scan
+scanForVideos();
