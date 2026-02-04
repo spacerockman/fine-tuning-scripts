@@ -41,6 +41,7 @@ let settings = {
 
 const allVideos = new Set();
 const rootsWithStyles = new WeakSet();
+const observedRoots = new WeakSet();
 
 // Initialize settings from storage
 chrome.storage.sync.get(['defaultSpeed', 'step'], (result) => {
@@ -109,7 +110,19 @@ function getOverlay(video) {
 }
 
 function createOverlay(video) {
-  if (video._qsOverlay) return video._qsOverlay;
+  if (video._qsOverlay) {
+      const overlay = video._qsOverlay;
+      // Check if overlay is still properly attached
+      if (overlay.parentNode !== video.parentNode && video.parentNode) {
+          // Video moved? Re-attach overlay
+          const parentStyle = window.getComputedStyle(video.parentNode);
+          if (parentStyle.position === 'static') {
+              video.parentNode.style.position = 'relative';
+          }
+          video.parentNode.appendChild(overlay);
+      }
+      return overlay;
+  }
 
   // Find the root (document or shadow root)
   let root = video.getRootNode();
@@ -165,11 +178,28 @@ function removeOverlay(video) {
     video._qsOverlay = null; // Clear reference
 }
 
+// function handleVideo(video) {
+//     // We removed the strictly "once" check to allow re-checking overlay state
+//     // if (!allVideos.has(video)) ... 
+    
+//     if (!allVideos.has(video)) {
+//         allVideos.add(video);
+//         // listeners checks...
+//     }
+//     ...
+// }
+
 function handleVideo(video) {
-    if (allVideos.has(video)) return;
+    createOverlay(video); // Ensure overlay exists and is attached
+
+    if (allVideos.has(video)) {
+        // Already handling this video.
+        // Do NOT call updateOverlay() here, as it resets the fade timer
+        // and causes flickering during periodic scans.
+        return;
+    }
     
     allVideos.add(video);
-    createOverlay(video);
 
     // Enforce default speed if near 1.0 (assuming unmodified)
     if (Math.abs(video.playbackRate - 1.0) < 0.1) {
@@ -195,8 +225,27 @@ function handleRemovedVideo(video) {
 }
 
 // Deep traversal for Shadow DOM
+function observeRoot(root) {
+    if (!root || observedRoots.has(root)) return;
+    observedRoots.add(root);
+    // Reuse the same observer instance (defined below)
+    // Note: observer variable is hoisted but in TDZ until initialization,
+    // so ensure this is called after observer is defined.
+    if (typeof observer !== 'undefined') {
+        observer.observe(root, { childList: true, subtree: true });
+    }
+}
+
 function scanRoot(root) {
     if (!root) return;
+    
+    // 0. Observe mutations in this root
+    observeRoot(root);
+
+    // 0.5. If the root itself has a shadow root (e.g. we scanned a custom element), scan that too
+    if (root.shadowRoot) {
+        scanRoot(root.shadowRoot);
+    }
 
     // 1. Check current root for videos
     const videos = root.querySelectorAll ? root.querySelectorAll('video') : [];
@@ -240,10 +289,8 @@ const observer = new MutationObserver((mutations) => {
     });
 });
 
-observer.observe(document.documentElement || document.body, { 
-    childList: true, 
-    subtree: true 
-});
+
+// Initial observation is handled by scanForVideos -> scanRoot -> observeRoot
 
 
 // Keyboard Listeners
@@ -277,8 +324,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Periodic scan to catch anything missed (e.g. rapid DOM changes or deep weirdness)
-// Reduced interval as we now have more event-based triggers, but kept as safety net
-setInterval(scanForVideos, 5000);
+// Also ensures observer is attached to document if missed
+setInterval(scanForVideos, 2000);
 
 // Run initial scan
 scanForVideos();
